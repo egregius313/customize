@@ -1,0 +1,79 @@
+#!/usr/bin/env python
+"""
+customize - simple wrapper to aid in editing configuration and .rc files.
+
+Usage:
+    customize add <command> <rc_file>
+    customize list
+    customize set-editor <editor>
+    customize which <command>...
+    customize <command>
+"""
+import errno
+import json
+from string import punctuation
+import os
+from os.path import abspath
+import sys
+
+import docopt
+
+
+RC_FILES_FILE = os.environ.get('HOME', '.') + '/.customize_rc_files.json'
+
+
+with open(RC_FILES_FILE) as f:
+    rc_files = json.load(f)
+
+
+def add_option(name, rc_file_name):
+    global rc_files
+
+    rc_files[name] = rc_file_name
+    
+    with open(RC_FILES_FILE, 'w') as rc_file_fp:
+        json.dump(rc_files, rc_file_fp)
+
+
+if __name__ == '__main__':
+    argv = docopt.docopt(__doc__)
+
+    if argv.get('list'):
+        for opt, value in sorted(rc_files.items()):
+            if not opt.startswith(tuple(punctuation)):
+                print(opt, value)
+    elif argv.get('add'):
+        from os.path import abspath
+        command = argv['<command>'][0]
+        path = abspath(argv['<rc_file>'])
+        add_option(command, path)
+    elif argv.get('set-editor'):
+        add_option('_customize_default_editor', argv['<editor>'])
+    elif argv.get('which'):
+        commands = argv.get('<command>')
+        for command in commands:
+            if command in rc_files:
+                print(command, rc_files[command])
+            else:
+                print('Command not found:', command, file=sys.stderr)
+    else:
+        editor = rc_files.get(
+            '_customize_default_editor',
+            os.environ.get(
+                '_customize_default_editor'
+            )
+        )
+        if not editor:
+            print(
+                'No default editor.\n'
+                'Either set $EDITOR in the environment or use `customize set-editor`.',
+                file=sys.stderr
+            )
+            exit(1)
+        try:
+            rc_file = rc_files[argv['<command>'][0]]
+        except LookupError as e:
+            print(e, file=sys.stderr)
+            exit(errno.ENOENT)
+        else:
+            exit(os.system('%s %s' % (editor, rc_file)))
