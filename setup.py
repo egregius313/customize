@@ -4,7 +4,7 @@ from setuptools import setup
 # ensure the .customize_rc_files.json file exists
 
 HOME_DIR = os.environ['HOME']
-CUSTOMIZE_RC_FILES = HOME_DIR + '.customize_rc_files.json'
+CUSTOMIZE_RC_FILES = HOME_DIR + '/.customize_rc_files.json'
 if not os.path.exists(CUSTOMIZE_RC_FILES):
     with open(CUSTOMIZE_RC_FILES, 'w') as rcf:
         if os.environ.get('EDITOR'):
