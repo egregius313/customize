@@ -19,5 +19,5 @@ setup(
     description='Simple CLI to ease editing .rc files',
     author='Ed Minnix',
     author_email='egregius313@gmail.com',
-    install_requires=['docopt==0.6.2']
+    install_requires=['docopt>=0.6.2']
 )
