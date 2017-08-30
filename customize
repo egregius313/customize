@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 customize - simple wrapper to aid in editing configuration and .rc files.
 
@@ -13,13 +13,24 @@ Usage:
 import errno
 import json
 import os
-from os.path import abspath
+from os import path
 import sys
 
 import docopt
 
 
-RC_FILES_FILE = os.environ.get('HOME', '.') + '/.customize_rc_files.json'
+RC_FILES_FILE = path.join(os.environ.get('HOME', '.'), '.customize_rc_files.json')
+
+
+if not path.exists(RC_FILES_FILE):
+    with open(RC_FILES_FILE, 'w') as f:
+        editor, editor_path = input('Enter the name and path for your preferred editor: ').split()
+        init_json = {
+            editor: editor_path,
+            '.customize_default_editor': editor
+            '.USE_ENVIRONMENT_EDITOR': False,
+        }
+        json.dump(init_json, f)
 
 
 with open(RC_FILES_FILE) as f:
@@ -44,26 +55,21 @@ if __name__ == '__main__':
                 print(opt, value)
     elif argv.get('add'):
         command = argv['<command>'][0]
-        path = abspath(argv['<rc_file>'])
-        add_option(command, path)
+        cfg_path = path.abspath(argv['<rc_file>'])
+        add_option(command, cfg_path)
     elif argv.get('set-editor'):
         add_option('.customize_default_editor', argv['<editor>'])
     elif argv.get('use-env-editor'):
         add_option('.USE_ENVIRONMENT_EDITOR', True)
     elif argv.get('which'):
         commands = argv.get('<command>')
-        if argv.get('-s'):
-            exit(0 if any(command in rc_files for command in commands) else 1)
-
         for command in commands:
             if command in rc_files:
                 print(rc_files[command])
             else:
                 print('Command not found:', command, file=sys.stderr)
     else:
-        if argv.get('-e'):
-          editor = argv.get('<editor>')
-        elif rc_files.get('.USE_ENVIRONMENT_EDITOR'):
+        if rc_files.get('.USE_ENVIRONMENT_EDITOR'):
             editor = os.environ.get('EDITOR')
         else:
             editor = rc_files.get(
